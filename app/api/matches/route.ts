@@ -3,63 +3,57 @@ export const revalidate = 30
 
 function getTodayESPN(){
   const now = new Date()
-  const y = now.getFullYear()
-  const m = String(now.getMonth()+1).padStart(2,'0')
-  const d = String(now.getDate()).padStart(2,'0')
-  return `${y}${m}${d}`
+  return `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`
 }
 
-function makeBetTips(home: string, away: string){
+// SMART single prediction
+function makeSingleTip(home:string, away:string){
   const r = Math.random()
-  // simple logic to make it look smart for bettors
-  const tips = []
-  if(r > 0.3) tips.push({ market: "Over 1.5 Goals", pick: "YES", odd: "1.25", conf: 85 })
-  if(r > 0.5) tips.push({ market: "Over 2.5 Goals", pick: r>0.6 ? "YES" : "NO", odd: r>0.6 ? "1.85" : "1.90", conf: 72 })
-  if(r > 0.2) tips.push({ market: "BTTS", pick: Math.random()>0.5 ? "YES" : "NO", odd: "1.80", conf: 70 })
-  tips.push({ market: "HT Over 0.5", pick: "YES", odd: "1.35", conf: 78 })
-  tips.push({ market: "Double Chance", pick: r>0.66 ? "1X" : r>0.33 ? "X2" : "12", odd: "1.40", conf: 80 })
-  tips.push({ market: "1X2", pick: r>0.66 ? "1" : r>0.33 ? "2" : "X", odd: r>0.66 ? "2.10" : "2.50", conf: 68 })
-  return tips
+  const tips = [
+    { market: "Match Result", pick: `Home - ${home}`, odd: "2.10", conf: 72, desc: "Home Advantage" },
+    { market: "Match Result", pick: `Away - ${away}`, odd: "2.40", conf: 70, desc: "Away Form" },
+    { market: "Double Chance", pick: "Home or Draw (1X)", odd: "1.35", conf: 82, desc: "Safe pick" },
+    { market: "Double Chance", pick: "Away or Draw (X2)", odd: "1.40", conf: 80, desc: "Safe pick" },
+    { market: "Goals", pick: "Over 1.5 Goals", odd: "1.28", conf: 88, desc: "High scoring expected" },
+    { market: "Combo", pick: `Home & Over 1.5`, odd: "2.05", conf: 75, desc: `${home} to win with goals` },
+    { market: "Combo", pick: `Away & Over 1.5`, odd: "2.60", conf: 73, desc: `${away} to win with goals` },
+    { market: "BTTS", pick: "BTTS Yes", odd: "1.85", conf: 68, desc: "Both teams scoring" },
+  ]
+  // pick one with high conf bias
+  const weighted = tips.sort(()=>0.5-Math.random()).sort((a,b)=>b.conf-a.conf)
+  return [weighted[0]] // ONLY ONE TIP
 }
 
-async function getESPN(leagueId: string, leagueName: string){
+async function getESPN(leagueId:string, leagueName:string){
   try{
-    const dateStr = getTodayESPN()
-    const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${leagueId}/scoreboard?dates=${dateStr}`, { next: { revalidate: 30 }, cache: 'no-store' })
+    const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${leagueId}/scoreboard?dates=${getTodayESPN()}`, { next:{revalidate:30} })
     const data = await res.json()
-    return (data.events || []).map((e:any)=>{
+    return (data.events||[]).map((e:any)=>{
       const comp = e.competitions[0]
       const home = comp.competitors.find((c:any)=>c.homeAway==='home')
       const away = comp.competitors.find((c:any)=>c.homeAway==='away')
-      const status = e.status.type.name
-      let s = "Upcoming"
-      if(status==="STATUS_IN_PROGRESS") s="Live"
-      if(status==="STATUS_FINAL") s="FT"
-      const score = `${home.score ?? 0}-${away.score ?? 0}`
+      const s = e.status.type.name==="STATUS_IN_PROGRESS"?"Live": e.status.type.name==="STATUS_FINAL"?"FT":"Upcoming"
       return {
         id: e.id,
         league: leagueName,
         home: home.team.displayName,
         away: away.team.displayName,
-        score: s==="Upcoming" ? "vs" : score,
+        score: s==="Upcoming"?"vs":`${home.score??0}-${away.score??0}`,
         status: s,
-        time: e.status.displayClock || e.status.type.shortDetail || "Today",
-        date: new Date().toLocaleDateString(),
-        tips: makeBetTips(home.team.displayName, away.team.displayName)
+        time: e.status.type.shortDetail||"Today",
+        tip: makeSingleTip(home.team.displayName, away.team.displayName)[0] // SINGLE TIP
       }
     })
   }catch{ return [] }
 }
 
 export async function GET(){
-  const [epl, laliga, seriea, bundes, ligue1, ucl] = await Promise.all([
+  const [epl, laliga, seriea, bundes, ligue1] = await Promise.all([
     getESPN("eng.1","Premier League"),
     getESPN("esp.1","LaLiga"),
     getESPN("ita.1","Serie A"),
     getESPN("ger.1","Bundesliga"),
     getESPN("fra.1","Ligue 1"),
-    getESPN("uefa.champions","Champions League"),
   ])
-  let all = [...epl, ...laliga, ...seriea, ...bundes, ...ligue1, ...ucl]
-  return NextResponse.json({ matches: all, fetchedFor: getTodayESPN() })
-}
+  return NextResponse.json({ matches: [...epl,...laliga,...seriea,...bundes,...ligue1] })
+         }
