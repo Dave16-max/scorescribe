@@ -26,54 +26,38 @@ const tips = [
   { name:"Home Over 0.5", odd:"1.22", conf:91, sub:"Home to score", cat:"Team Goals" },
 ]
 
-const fallback = [
-  { home: "Tottenham Hotspur", away: "Aston Villa", league: "Premier League", time:"Today, 19:45 • London" },
-  { home: "Arsenal", away: "Newcastle United", league: "Premier League", time:"Today, 21:00 • London" },
-  { home: "Man City", away: "Chelsea", league: "Premier League", time:"Today, 17:30 • Manchester" },
-  { home: "Barcelona", away: "Real Madrid", league: "LaLiga", time:"Today, 20:00 • Barcelona" },
-  { home: "Inter", away: "AC Milan", league: "Serie A", time:"Today, 19:45 • Milan" },
-  { home: "Bayern Munich", away: "Dortmund", league: "Bundesliga", time:"Today, 17:30 • Munich" },
-  { home: "Leverkusen", away: "Stuttgart", league: "Bundesliga", time:"Today, 15:30 • Leverkusen" },
-  { home: "PSG", away: "Marseille", league: "Ligue 1", time:"Today, 20:45 • Paris" },
-  { home: "Monaco", away: "Lyon", league: "Ligue 1", time:"Today, 19:00 • Monaco" },
-  { home: "Real Madrid", away: "Man City", league: "Champions League", time:"Today, 21:00 • Madrid" },
-  { home: "Arsenal", away: "Bayern Munich", league: "Champions League", time:"Today, 21:00 • London" },
-  { home: "Liverpool", away: "Roma", league: "Europa League", time:"Today, 21:00 • Liverpool" },
-  { home: "Leverkusen", away: "AC Milan", league: "Europa League", time:"Today, 18:45 • Leverkusen" },
-  { home: "Chelsea", away: "Fiorentina", league: "Conference League", time:"Today, 18:45 • London" },
-  { home: "Real Betis", away: "Villarreal", league: "Conference League", time:"Today, 18:45 • Seville" },
-  { home: "Man United", away: "Tottenham", league: "Premier League", time:"Today, 15:00 • Manchester" },
-  { home: "Napoli", away: "Lazio", league: "Serie A", time:"Today, 20:45 • Naples" },
-  { home: "Atletico Madrid", away: "Sevilla", league: "LaLiga", time:"Today, 18:15 • Madrid" },
-  { home: "Juventus", away: "Roma", league: "Serie A", time:"Today, 17:00 • Turin" },
-  { home: "Dortmund", away: "Leipzig", league: "Bundesliga", time:"Today, 19:30 • Dortmund" },
+const mainMatches = [
+  { home: "Man City", away: "Arsenal", league: "Premier League", time:"Today, 15:00 • Etihad" },
+  { home: "Chelsea", away: "Liverpool", league: "Premier League", time:"Today, 17:30 • Stamford Bridge" },
+  { home: "Man United", away: "Tottenham", league: "Premier League", time:"Today, 15:00 • Old Trafford" },
+  { home: "Barcelona", away: "Real Madrid", league: "LaLiga", time:"Today, 20:00 • Camp Nou" },
+  { home: "Atletico Madrid", away: "Sevilla", league: "LaLiga", time:"Today, 18:15 • Metropolitano" },
+  { home: "Inter", away: "AC Milan", league: "Serie A", time:"Today, 19:45 • San Siro" },
+  { home: "Juventus", away: "Roma", league: "Serie A", time:"Today, 17:00 • Allianz" },
+  { home: "Bayern Munich", away: "Dortmund", league: "Bundesliga", time:"Today, 17:30 • Allianz Arena" },
+  { home: "Leverkusen", away: "Stuttgart", league: "Bundesliga", time:"Today, 15:30 • BayArena" },
+  { home: "PSG", away: "Marseille", league: "Ligue 1", time:"Today, 20:45 • Parc des Princes" },
+  { home: "Monaco", away: "Lyon", league: "Ligue 1", time:"Today, 19:00 • Louis II" },
+  { home: "Lille", away: "Nice", league: "Ligue 1", time:"Today, 17:00 • Lille" },
+  { home: "Real Madrid", away: "Man City", league: "Champions League", time:"Tomorrow, 21:00 • Bernabeu" },
+  { home: "Arsenal", away: "Bayern Munich", league: "Champions League", time:"Tomorrow, 21:00 • Emirates" },
+  { home: "Inter", away: "Barcelona", league: "Champions League", time:"Tomorrow, 21:00 • San Siro" },
+  { home: "Liverpool", away: "Roma", league: "Europa League", time:"Tomorrow, 18:45 • Anfield" },
+  { home: "Leverkusen", away: "AC Milan", league: "Europa League", time:"Tomorrow, 18:45 • BayArena" },
+  { home: "Marseille", away: "Ajax", league: "Europa League", time:"Tomorrow, 18:45 • Velodrome" },
+  { home: "Chelsea", away: "Fiorentina", league: "Conference League", time:"Tomorrow, 18:45 • Stamford Bridge" },
+  { home: "Real Betis", away: "Villarreal", league: "Conference League", time:"Tomorrow, 20:00 • Benito Villamarin" },
 ]
 
 export default function Page() {
   const [filter, setFilter] = useState("All")
-  const [matches, setMatches] = useState(fallback)
+  const [matches, setMatches] = useState(mainMatches)
   const [tab, setTab] = useState("HOME")
 
-  useEffect(()=>{
-    async function load(){
-      try{
-        const today = new Date().toISOString().split('T')[0]
-        const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${today}&s=Soccer`)
-        const data = await res.json()
-        if(data.events?.length){
-          setMatches(data.events.slice(0,25).map((e:any)=>({
-            home: e.strHomeTeam, away: e.strAwayTeam,
-            league: e.strLeague?.includes("Champions")?"Champions League":e.strLeague?.includes("Conference")?"Conference League":e.strLeague?.includes("Europa")?"Europa League":e.strLeague || "Premier League",
-            time: "Today, "+(e.strTime?.slice(0,5)||"19:45")
-          })))
-        }
-      }catch{}
-    }
-    load()
-  },[])
+  useEffect(()=>{ setMatches(mainMatches) },[])
 
-  const filtered = filter==="All"? matches : matches.filter(m => m.league.toLowerCase().includes(filter.split(" ")[0].toLowerCase()))
-  const display = filtered.length? filtered : matches
+  const filtered = filter==="All"? matches : matches.filter(m => m.league === filter)
+  const display = filtered
 
   return (
     <div style={{minHeight:"100vh",background:"#050505",color:"white",paddingBottom:95}}>
@@ -84,7 +68,7 @@ export default function Page() {
         </div>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           <div style={{background:"#111",padding:"7px 12px",borderRadius:20,fontSize:11,color:"#888",border:"1px solid #222"}}>⚽ {display.length} Matches</div>
-          <a href="/vip" style={{background:"#00ff88",color:"black",padding:"9px 16px",borderRadius:20,fontWeight:900,textDecoration:"none",fontSize:13}}>VIP ₦4900</a>
+          <a href="/vip" style={{background:"linear-gradient(135deg,#00ff88,#00cc6a)",color:"black",padding:"13px 24px",borderRadius:30,fontWeight:900,textDecoration:"none",fontSize:15,display:"flex",alignItems:"center",gap:6,boxShadow:"0 0 25px rgba(0,255,136,0.7), 0 4px 15px rgba(0,0,0,0.3)",border:"2px solid #aaffdd",transform:"scale(1.05)"}}>👑 VIP ₦4900</a>
         </div>
       </div>
 
@@ -130,9 +114,9 @@ export default function Page() {
         </>
       )}
 
-      {tab==="ANALYSIS" && <div style={{padding:15}}><h2 style={{fontWeight:900}}>📊 Analysis</h2><div style={{marginTop:15,background:"#121212",padding:15,borderRadius:14,border:"1px solid #222"}}>20 markets active • Best: 1st Half Over 0.5 (87%) • Home or Draw (89%)<br/><a href="/vip" style={{display:"block",marginTop:12,background:"#00ff88",color:"black",padding:12,borderRadius:10,textAlign:"center",fontWeight:900,textDecoration:"none"}}>Unlock VIP</a></div></div>}
-      {tab==="PREDICTIONS" && <div style={{padding:15}}><h2 style={{fontWeight:900}}>🎯 Predictions</h2><div style={{marginTop:15,background:"#121212",padding:20,borderRadius:14,border:"1px solid #222",textAlign:"center"}}>🔒 VIP Only - 20 markets<br/><a href="/vip" style={{display:"block",marginTop:12,background:"#00ff88",color:"black",padding:12,borderRadius:10,fontWeight:900,textDecoration:"none"}}>Join VIP ₦4900/week</a></div></div>}
-      {tab==="PROFILE" && <div style={{padding:15}}><h2 style={{fontWeight:900}}>👤 Profile</h2><div style={{marginTop:15,background:"#121212",padding:15,borderRadius:14,border:"1px solid #222"}}>Guest • Free Plan • 20 bet options active<br/><span style={{color:"#00ff88",fontWeight:900}}>84% Win Rate</span><br/><a href="/vip" style={{display:"block",marginTop:15,background:"#00ff88",color:"black",padding:14,borderRadius:12,textAlign:"center",fontWeight:900,textDecoration:"none"}}>Upgrade VIP 👑</a></div></div>}
+      {tab==="ANALYSIS" && <div style={{padding:15}}><h2 style={{fontWeight:900}}>📊 Analysis</h2><div style={{marginTop:15,background:"#121212",padding:15,borderRadius:14,border:"1px solid #222"}}>20 markets active<br/><a href="/vip" style={{display:"block",marginTop:12,background:"#00ff88",color:"black",padding:12,borderRadius:10,textAlign:"center",fontWeight:900,textDecoration:"none"}}>👑 Unlock VIP</a></div></div>}
+      {tab==="PREDICTIONS" && <div style={{padding:15}}><h2 style={{fontWeight:900}}>🎯 Predictions</h2><div style={{marginTop:15,background:"#121212",padding:20,borderRadius:14,border:"1px solid #222",textAlign:"center"}}>🔒 VIP Only<br/><a href="/vip" style={{display:"block",marginTop:12,background:"#00ff88",color:"black",padding:12,borderRadius:10,fontWeight:900,textDecoration:"none"}}>👑 Join VIP ₦4900/week</a></div></div>}
+      {tab==="PROFILE" && <div style={{padding:15}}><h2 style={{fontWeight:900}}>👤 Profile</h2><div style={{marginTop:15,background:"#121212",padding:15,borderRadius:14,border:"1px solid #222"}}>Guest • Free Plan<br/><span style={{color:"#00ff88",fontWeight:900}}>84% Win Rate</span><br/><a href="/vip" style={{display:"block",marginTop:15,background:"#00ff88",color:"black",padding:14,borderRadius:12,textAlign:"center",fontWeight:900,textDecoration:"none"}}>👑 Upgrade VIP</a></div></div>}
 
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#0a0a0a",borderTop:"1px solid #1a1a1a",display:"flex",justifyContent:"space-around",padding:"10px 0"}}>
         <button onClick={()=>setTab("HOME")} style={{background:"none",border:"none",color:tab==="HOME"?"#00ff88":"#666"}}><div>⌂</div><div style={{fontSize:10,fontWeight:900}}>HOME</div></button>
@@ -142,4 +126,4 @@ export default function Page() {
       </div>
     </div>
   )
-}
+                    }
