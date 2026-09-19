@@ -19,7 +19,10 @@ export default function Page(){
               <div style={{fontSize:10,letterSpacing:2,color:"#777",fontWeight:700}}>DAILY GUIDE</div>
             </div>
           </div>
-          <div style={{fontSize:11,padding:"6px 12px",borderRadius:20,background:"#1a1a1d",border:"1px solid rgba(255,255,255,0.1)",color:"#999"}}>{matches.length} Matches</div>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <a href="/vip" style={{fontSize:12,fontWeight:900,padding:"8px 14px",borderRadius:20,background:"#00ff88",color:"black",textDecoration:"none"}}>👑 VIP - ₦4900</a>
+            <div style={{fontSize:11,padding:"6px 12px",borderRadius:20,background:"#1a1a1d",border:"1px solid rgba(255,255,255,0.1)",color:"#999"}}>{matches.length} Matches</div>
+          </div>
         </div>
         <div style={{maxWidth:720,margin:"0 auto",padding:"0 20px 12px",display:"flex",gap:8,overflowX:"auto"}}>
           {leagues.map((l:any)=><button key={l} onClick={()=>setFilter(l)} style={{flexShrink:0,fontSize:13,padding:"0 16px",height:32,borderRadius:20,border:"1px solid rgba(255,255,255,0.1)",background:filter===l?"white":"#1a1a1d",color:filter===l?"black":"#999",fontWeight:filter===l?700:400}}>{l}</button>)}
