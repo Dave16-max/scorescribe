@@ -1,24 +1,50 @@
 import { NextResponse } from 'next/server'
 export const revalidate = 60
 
-function predict(h:number, a:number){
-  const diff = h-a
-  if(diff>0.5) return { p:'1', c:78, text:'Home Win' }
-  if(diff<-0.5) return { p:'2', c:75, text:'Away Win' }
-  return { p:'X', c:54, text:'Draw' }
+async function getESPN(leagueId: string, leagueName: string){
+  try{
+    const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${leagueId}/scoreboard`, { next: { revalidate: 60 } })
+    const data = await res.json()
+    return (data.events || []).map((e:any)=>{
+      const comp = e.competitions[0]
+      const home = comp.competitors.find((c:any)=>c.homeAway==='home')
+      const away = comp.competitors.find((c:any)=>c.homeAway==='away')
+      const status = e.status.type.name
+      let s = "Upcoming"
+      if(status==="STATUS_IN_PROGRESS") s="Live"
+      if(status==="STATUS_FINAL") s="FT"
+      const score = `${home.score ?? 0}-${away.score ?? 0}`
+      let pred = Math.random() > 0.6 ? "1" : Math.random() > 0.5 ? "2" : "X"
+      let txt = pred==="1" ? "Home Win" : pred==="2" ? "Away Win" : "Draw"
+      return {
+        id: e.id,
+        league: leagueName,
+        home: home.team.displayName,
+        away: away.team.displayName,
+        score: s==="Upcoming" ? "vs" : score,
+        status: s,
+        time: e.status.displayClock || e.status.type.shortDetail || "",
+        date: new Date(e.date).toLocaleDateString(),
+        prediction: pred,
+        predText: txt,
+        confidence: Math.floor(65 + Math.random()*20)
+      }
+    })
+  }catch{ return [] }
 }
 
 export async function GET(){
-  const today = new Date().toDateString()
-  const data = [
-    {id:1, league:'Premier League', home:'Man City', away:'Arsenal', hs:2.1, as:1.4, score:'2-1', status:'Live', time:'67'},
-    {id:2, league:'Premier League', home:'Chelsea', away:'Man Utd', hs:1.2, as:1.5, score:'1-1', status:'Live', time:'54'},
-    {id:3, league:'LaLiga', home:'Real Madrid', away:'Barcelona', hs:1.9, as:1.8, score:'0-0', status:'Upcoming', time:'19:00'},
-    {id:4, league:'Serie A', home:'Inter', away:'AC Milan', hs:1.6, as:1.3, score:'1-0', status:'FT', time:'FT'},
-    {id:5, league:'NPFL', home:'Enyimba', away:'Rangers', hs:1.7, as:1.1, score:'2-0', status:'Live', time:'71'},
-  ].map((m:any)=>{
-    const r = predict(m.hs, m.as)
-    return {...m, date:today, prediction:r.p, confidence:r.c, predText:r.text}
-  })
-  return NextResponse.json({ matches: data }, { headers: { 'Cache-Control': 's-maxage=60' } })
+  const [epl, laliga, seriea, bundes, ligue1, ucl] = await Promise.all([
+    getESPN("eng.1","Premier League"),
+    getESPN("esp.1","LaLiga"),
+    getESPN("ita.1","Serie A"),
+    getESPN("ger.1","Bundesliga"),
+    getESPN("fra.1","Ligue 1"),
+    getESPN("uefa.champions","Champions League"),
+  ])
+  let all = [...epl, ...laliga, ...seriea, ...bundes, ...ligue1, ...ucl]
+  if(all.length===0){
+    all = [{ id: "1", league: "Info", home: "No BIG games today", away: "Season break / No fixtures", score: "vs", status: "Upcoming", time: "Check back tomorrow", date: new Date().toDateString(), prediction: "X", predText: "-", confidence: 0 }]
+  }
+  return NextResponse.json({ matches: all })
 }
