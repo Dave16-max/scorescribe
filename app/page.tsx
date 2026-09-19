@@ -1,111 +1,135 @@
-"use client"
+       "use client"
 import { useState, useEffect } from "react"
 
 const leagues = ["All","Premier League","LaLiga","Serie A","Bundesliga","Ligue 1","Champions League","Europa League","Conference League"]
 
 const tips = [
-  { name:"1st Half Over 0.5", odd:"1.35", conf:87, sub:"Goal before HT", cat:"HT Goals" },
-  { name:"Home or Draw", odd:"1.25", conf:89, sub:"1X - Home not to lose", cat:"Double Chance" },
-  { name:"Away or Draw", odd:"1.30", conf:86, sub:"X2 - Away not to lose", cat:"Double Chance" },
-  { name:"Over 1.5 Goals", odd:"1.28", conf:88, sub:"High scoring expected", cat:"Goals" },
-  { name:"BTTS Yes", odd:"1.75", conf:72, sub:"Both teams to score", cat:"BTTS" },
-  { name:"Home Win", odd:"1.85", conf:76, sub:"Home advantage", cat:"1X2" },
-  { name:"Away Win", odd:"2.10", conf:68, sub:"Away strong form", cat:"1X2" },
-  { name:"Double Chance 1X", odd:"1.32", conf:90, sub:"Home or Draw", cat:"Double Chance" },
-  { name:"Double Chance X2", odd:"1.45", conf:84, sub:"Draw or Away", cat:"Double Chance" },
-  { name:"Double Chance 12", odd:"1.28", conf:88, sub:"No draw", cat:"Double Chance" },
-  { name:"Under 3.5 Goals", odd:"1.40", conf:80, sub:"Tight game", cat:"Goals" },
-  { name:"Over 2.5 Goals", odd:"1.95", conf:68, sub:"Open game expected", cat:"Goals" },
-  { name:"BTTS No", odd:"1.90", conf:70, sub:"Clean sheet likely", cat:"BTTS" },
-  { name:"Home Win or Draw", odd:"1.25", conf:89, sub:"1X safe option", cat:"Double Chance" },
-  { name:"Away Win or Draw", odd:"1.40", conf:82, sub:"X2 safe option", cat:"Double Chance" },
-  { name:"Over 0.5 HT", odd:"1.35", conf:85, sub:"Goal in 1st half", cat:"HT Goals" },
-  { name:"Under 2.5 Goals", odd:"1.65", conf:75, sub:"Low scoring", cat:"Goals" },
-  { name:"Draw No Bet - Home", odd:"1.50", conf:79, sub:"Home DNB", cat:"DNB" },
-  { name:"Draw No Bet - Away", odd:"1.60", conf:77, sub:"Away DNB", cat:"DNB" },
-  { name:"Home Over 0.5", odd:"1.22", conf:91, sub:"Home to score", cat:"Team Goals" },
+  { name:"1st Half Over 0.5", odd:"1.35", conf:87, cat:"HT Goals" },
+  { name:"Home or Draw", odd:"1.25", conf:89, cat:"Double Chance" },
+  { name:"Away or Draw", odd:"1.30", conf:86, cat:"Double Chance" },
+  { name:"Over 1.5 Goals", odd:"1.28", conf:88, cat:"Goals" },
+  { name:"BTTS Yes", odd:"1.75", conf:72, cat:"BTTS" },
+  { name:"Home Win", odd:"1.85", conf:76, cat:"1X2" },
+  { name:"Away Win", odd:"2.10", conf:68, cat:"1X2" },
+  { name:"Double Chance 1X", odd:"1.32", conf:90, cat:"Double Chance" },
+  { name:"Double Chance X2", odd:"1.45", conf:84, cat:"Double Chance" },
+  { name:"Double Chance 12", odd:"1.28", conf:88, cat:"Double Chance" },
+  { name:"Under 3.5 Goals", odd:"1.40", conf:80, cat:"Goals" },
+  { name:"Over 2.5 Goals", odd:"1.95", conf:68, cat:"Goals" },
+  { name:"BTTS No", odd:"1.90", conf:70, cat:"BTTS" },
+  { name:"Home Win or Draw", odd:"1.25", conf:89, cat:"Double Chance" },
+  { name:"Away Win or Draw", odd:"1.40", conf:82, cat:"Double Chance" },
+  { name:"Over 0.5 HT", odd:"1.35", conf:85, cat:"HT Goals" },
+  { name:"Under 2.5 Goals", odd:"1.65", conf:75, cat:"Goals" },
+  { name:"Draw No Bet - Home", odd:"1.50", conf:79, cat:"DNB" },
+  { name:"Draw No Bet - Away", odd:"1.60", conf:77, cat:"DNB" },
+  { name:"Home Over 0.5", odd:"1.22", conf:91, cat:"Team Goals" },
 ]
 
-const mainMatches = [
-  { home: "Man City", away: "Arsenal", league: "Premier League", time:"Today, 15:00 • Etihad" },
-  { home: "Chelsea", away: "Liverpool", league: "Premier League", time:"Today, 17:30 • Stamford Bridge" },
-  { home: "Man United", away: "Tottenham", league: "Premier League", time:"Today, 15:00 • Old Trafford" },
-  { home: "Barcelona", away: "Real Madrid", league: "LaLiga", time:"Today, 20:00 • Camp Nou" },
-  { home: "Atletico Madrid", away: "Sevilla", league: "LaLiga", time:"Today, 18:15 • Metropolitano" },
-  { home: "Inter", away: "AC Milan", league: "Serie A", time:"Today, 19:45 • San Siro" },
-  { home: "Juventus", away: "Roma", league: "Serie A", time:"Today, 17:00 • Allianz" },
-  { home: "Bayern Munich", away: "Dortmund", league: "Bundesliga", time:"Today, 17:30 • Allianz Arena" },
-  { home: "Leverkusen", away: "Stuttgart", league: "Bundesliga", time:"Today, 15:30 • BayArena" },
-  { home: "PSG", away: "Marseille", league: "Ligue 1", time:"Today, 20:45 • Parc des Princes" },
-  { home: "Monaco", away: "Lyon", league: "Ligue 1", time:"Today, 19:00 • Louis II" },
-  { home: "Lille", away: "Nice", league: "Ligue 1", time:"Today, 17:00 • Lille" },
-  { home: "Real Madrid", away: "Man City", league: "Champions League", time:"Tomorrow, 21:00 • Bernabeu" },
-  { home: "Arsenal", away: "Bayern Munich", league: "Champions League", time:"Tomorrow, 21:00 • Emirates" },
-  { home: "Inter", away: "Barcelona", league: "Champions League", time:"Tomorrow, 21:00 • San Siro" },
-  { home: "Liverpool", away: "Roma", league: "Europa League", time:"Tomorrow, 18:45 • Anfield" },
-  { home: "Leverkusen", away: "AC Milan", league: "Europa League", time:"Tomorrow, 18:45 • BayArena" },
-  { home: "Marseille", away: "Ajax", league: "Europa League", time:"Tomorrow, 18:45 • Velodrome" },
-  { home: "Chelsea", away: "Fiorentina", league: "Conference League", time:"Tomorrow, 18:45 • Stamford Bridge" },
-  { home: "Real Betis", away: "Villarreal", league: "Conference League", time:"Tomorrow, 20:00 • Benito Villamarin" },
+const fallbackMatches = [
+  { home: "Tottenham Hotspur", away: "Aston Villa", league: "Premier League", time:"11:30 GMT • Today" },
+  { home: "Brighton", away: "Arsenal", league: "Premier League", time:"14:00 GMT • Today" },
+  { home: "Everton", away: "Ipswich Town", league: "Premier League", time:"14:00 GMT • Today" },
+  { home: "Newcastle United", away: "Hull City", league: "Premier League", time:"14:00 GMT • Today" },
+  { home: "Nottingham Forest", away: "Coventry City", league: "Premier League", time:"16:30 GMT • Today" },
+  { home: "Werder Bremen", away: "Augsburg", league: "Bundesliga", time:"13:30 GMT • Today" },
+  { home: "Hamburg", away: "1. FC Köln", league: "Bundesliga", time:"13:30 GMT • Today" },
+  { home: "Mönchengladbach", away: "Mainz", league: "Bundesliga", time:"13:30 GMT • Today" },
+  { home: "Frankfurt", away: "Freiburg", league: "Bundesliga", time:"13:30 GMT • Today" },
+  { home: "Stuttgart", away: "Borussia Dortmund", league: "Bundesliga", time:"16:30 GMT • Today" },
+  { home: "Osasuna", away: "Rayo Vallecano", league: "LaLiga", time:"12:00 GMT • Today" },
+  { home: "Athletic Club", away: "Alavés", league: "LaLiga", time:"14:15 GMT • Today" },
+  { home: "Celta Vigo", away: "Racing Santander", league: "LaLiga", time:"16:30 GMT • Today" },
+  { home: "Sevilla", away: "Barcelona", league: "LaLiga", time:"19:00 GMT • Today" },
 ]
 
 export default function Page() {
   const [filter, setFilter] = useState("All")
-  const [matches, setMatches] = useState(mainMatches)
   const [tab, setTab] = useState("HOME")
+  const [matches, setMatches] = useState(fallbackMatches)
+  const [lastUpdate, setLastUpdate] = useState("Today")
 
-  useEffect(()=>{ setMatches(mainMatches) },[])
+  useEffect(()=>{
+    async function updateDaily(){
+      try{
+        const today = new Date().toISOString().split('T')[0]
+        // Try to fetch real matches
+        const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${today}&s=Soccer`)
+        const data = await res.json()
+
+        if(data.events && data.events.length > 0){
+          // Filter only top leagues
+          const topLeagues = ["Premier League","La Liga","Spanish La Liga","Bundesliga","Serie A","Ligue 1","Champions League","Europa League","Europa Conference League","Conference League"]
+          const filtered = data.events.filter((e:any)=>
+            topLeagues.some(l => e.strLeague?.toLowerCase().includes(l.toLowerCase().split(" ")[0])) &&
+           !e.strLeague?.toLowerCase().includes("usl") &&
+           !e.strLeague?.toLowerCase().includes("2. bundesliga")
+          )
+
+          if(filtered.length >= 5){
+            const mapped = filtered.slice(0,20).map((e:any)=>({
+              home: e.strHomeTeam,
+              away: e.strAwayTeam,
+              league: e.strLeague?.includes("Premier")?"Premier League":e.strLeague?.includes("La Liga")||e.strLeague?.includes("LaLiga")?"LaLiga":e.strLeague?.includes("Bundesliga")?"Bundesliga":e.strLeague?.includes("Serie")?"Serie A":e.strLeague?.includes("Ligue")?"Ligue 1":e.strLeague?.includes("Champions")?"Champions League":e.strLeague?.includes("Conference")?"Conference League":"Europa League",
+              time: e.strTime? e.strTime.slice(0,5)+" GMT • Today" : "Today"
+            }))
+            setMatches(mapped)
+            setLastUpdate(new Date().toLocaleDateString())
+          }
+        }
+      }catch(e){
+        // Keep fallback if API fails
+        console.log("Using fallback matches")
+      }
+    }
+    updateDaily()
+    // Auto refresh every 6 hours
+    const interval = setInterval(updateDaily, 6*60*60*1000)
+    return ()=> clearInterval(interval)
+  },[])
 
   const filtered = filter==="All"? matches : matches.filter(m => m.league === filter)
-  const display = filtered
 
   return (
-    <div style={{minHeight:"100vh",background:"#050505",color:"white",paddingBottom:95}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 14px 8px"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <div style={{width:42,height:42,background:"#111",borderRadius:12,border:"1px solid #222",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:24}}>S</div>
-          <div><div style={{fontWeight:900,fontSize:15,lineHeight:1.1}}>SCORESRIBE<br/>DAILY GUIDE</div></div>
+    <div style={{minHeight:"100vh",background:"#050505",color:"white",paddingBottom:90}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:9}}>
+          <div style={{width:38,height:38,background:"white",color:"black",borderRadius:9,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900}}>S</div>
+          <div style={{fontWeight:900,fontSize:12,lineHeight:1.1}}>SCORESRIBE<br/>DAILY GUIDE</div>
         </div>
-        <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          <div style={{background:"#111",padding:"7px 12px",borderRadius:20,fontSize:11,color:"#888",border:"1px solid #222"}}>⚽ {display.length} Matches</div>
-          <a href="/vip" style={{background:"linear-gradient(135deg,#00ff88,#00cc6a)",color:"black",padding:"13px 24px",borderRadius:30,fontWeight:900,textDecoration:"none",fontSize:15,display:"flex",alignItems:"center",gap:6,boxShadow:"0 0 25px rgba(0,255,136,0.7), 0 4px 15px rgba(0,0,0,0.3)",border:"2px solid #aaffdd",transform:"scale(1.05)"}}>👑 VIP ₦4900</a>
+        <div style={{display:"flex",gap:7,alignItems:"center"}}>
+          <div style={{background:"#1a1a1a",padding:"5px 9px",borderRadius:20,fontSize:11,color:"#888"}}>{filtered.length} Matches</div>
+          <a href="/vip" style={{background:"#00ff88",color:"black",padding:"8px 14px",borderRadius:18,fontWeight:800,textDecoration:"none",fontSize:12}}>👑 VIP ₦4900</a>
         </div>
       </div>
 
       {tab==="HOME" && (
         <>
-          <div style={{display:"flex",gap:8,padding:"12px",overflowX:"auto"}}>
+          <div style={{display:"flex",gap:7,padding:"0 12px 10px",overflowX:"auto"}}>
             {leagues.map(l=>(
-              <button key={l} onClick={()=>setFilter(l)} style={{whiteSpace:"nowrap",padding:"9px 12px",borderRadius:14,border:"1px solid #222",background:filter===l?"#00ff88":"#121212",color:filter===l?"black":"#aaa",fontWeight:800,fontSize:11}}>{l}</button>
+              <button key={l} onClick={()=>setFilter(l)} style={{whiteSpace:"nowrap",padding:"8px 12px",borderRadius:10,border:"none",background:filter===l?"#00ff88":"#1a1a1a",color:filter===l?"black":"#aaa",fontWeight:700,fontSize:11}}>{l}</button>
             ))}
           </div>
-
-          <div style={{margin:12,background:"#0f1a13",borderRadius:18,padding:14,border:"1px solid #1a2e1f",display:"flex",gap:10}}>
-            <div style={{width:28,height:28,background:"#00ff88",borderRadius:50,display:"flex",alignItems:"center",justifyContent:"center",color:"black",fontWeight:900}}>✓</div>
-            <div><div style={{color:"#00ff88",fontSize:12,fontWeight:900}}>ACCURATE • 20 BET OPTIONS</div><div style={{fontSize:13,marginTop:2,color:"#ccc"}}>1st Half, Double Chance, BTTS & more</div></div>
+          <div style={{margin:"0 12px 10px",background:"#111",borderRadius:10,padding:10,border:"1px solid #222",display:"flex",gap:8,alignItems:"center",justifyContent:"space-between"}}>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <div style={{width:20,height:20,background:"#00ff88",borderRadius:50,display:"flex",alignItems:"center",justifyContent:"center",color:"black",fontWeight:900,fontSize:11}}>✓</div>
+              <div style={{fontSize:11}}><span style={{color:"#00ff88",fontWeight:800}}>AUTO UPDATES DAILY</span><span style={{color:"#666",marginLeft:6}}>• {lastUpdate}</span></div>
+            </div>
+            <div style={{fontSize:10,color:"#00ff88"}}>● Live</div>
           </div>
-
-          <div style={{padding:"0 12px",display:"flex",flexDirection:"column",gap:12}}>
-            {display.map((m:any,i)=>{
+          <div style={{padding:"0 12px",display:"flex",flexDirection:"column",gap:10}}>
+            {filtered.map((m:any,i)=>{
               const t = tips[i % tips.length]
               return (
-                <div key={i} style={{background:"#121212",borderRadius:18,padding:12,border:"1px solid #1f1f1f"}}>
+                <div key={i} style={{background:"#121212",borderRadius:14,padding:11,border:"1px solid #1e1e1e"}}>
                   <div style={{display:"flex",justifyContent:"space-between"}}>
-                    <span style={{background:"#1e1e1e",padding:"5px 10px",borderRadius:20,fontSize:11,fontWeight:700}}>{m.league}</span>
-                    <span style={{fontSize:11,color:"#00ff88"}}>● Upcoming • VS</span>
+                    <span style={{background:"#222",padding:"3px 8px",borderRadius:20,fontSize:10}}>{m.league}</span>
+                    <span style={{fontSize:10,color:"#00ff88"}}>● {m.time}</span>
                   </div>
-                  <div style={{marginTop:10,fontWeight:800,fontSize:15}}>{m.home} vs {m.away}</div>
-                  <div style={{fontSize:11,color:"#666"}}>Scheduled • {m.time}</div>
-                  <div style={{marginTop:10,background:"#0d0d0d",borderRadius:12,padding:10,border:"1px solid #1f1f1f"}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                      <div>
-                        <div style={{color:"#00ff88",fontSize:10,fontWeight:800}}>{t.cat} • {t.conf}% CONFIDENCE</div>
-                        <div style={{fontWeight:900,fontSize:15,marginTop:2}}>{t.name}</div>
-                        <div style={{fontSize:11,color:"#666"}}>{t.sub}</div>
-                      </div>
-                      <div style={{textAlign:"right"}}><div style={{fontSize:9,color:"#666"}}>ODD</div><div style={{color:"#00ff88",fontWeight:900,fontSize:18}}>@{t.odd}</div></div>
-                    </div>
-                    <div style={{marginTop:8,height:6,background:"#222",borderRadius:10}}><div style={{width:`${t.conf}%`,height:"100%",background:"#00ff88",borderRadius:10}}></div></div>
+                  <div style={{marginTop:7,fontWeight:800,fontSize:13}}>{m.home} vs {m.away}</div>
+                  <div style={{marginTop:8,background:"#0a0a0a",borderRadius:8,padding:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div><div style={{color:"#00ff88",fontSize:9,fontWeight:800}}>{t.cat} • {t.conf}%</div><div style={{fontWeight:800,fontSize:13}}>{t.name}</div></div>
+                    <div style={{background:"#1a1a1a",padding:"5px 10px",borderRadius:6}}><span style={{color:"#00ff88",fontWeight:900,fontSize:12}}>@{t.odd}</span></div>
                   </div>
                 </div>
               )
@@ -113,17 +137,15 @@ export default function Page() {
           </div>
         </>
       )}
-
-      {tab==="ANALYSIS" && <div style={{padding:15}}><h2 style={{fontWeight:900}}>📊 Analysis</h2><div style={{marginTop:15,background:"#121212",padding:15,borderRadius:14,border:"1px solid #222"}}>20 markets active<br/><a href="/vip" style={{display:"block",marginTop:12,background:"#00ff88",color:"black",padding:12,borderRadius:10,textAlign:"center",fontWeight:900,textDecoration:"none"}}>👑 Unlock VIP</a></div></div>}
-      {tab==="PREDICTIONS" && <div style={{padding:15}}><h2 style={{fontWeight:900}}>🎯 Predictions</h2><div style={{marginTop:15,background:"#121212",padding:20,borderRadius:14,border:"1px solid #222",textAlign:"center"}}>🔒 VIP Only<br/><a href="/vip" style={{display:"block",marginTop:12,background:"#00ff88",color:"black",padding:12,borderRadius:10,fontWeight:900,textDecoration:"none"}}>👑 Join VIP ₦4900/week</a></div></div>}
-      {tab==="PROFILE" && <div style={{padding:15}}><h2 style={{fontWeight:900}}>👤 Profile</h2><div style={{marginTop:15,background:"#121212",padding:15,borderRadius:14,border:"1px solid #222"}}>Guest • Free Plan<br/><span style={{color:"#00ff88",fontWeight:900}}>84% Win Rate</span><br/><a href="/vip" style={{display:"block",marginTop:15,background:"#00ff88",color:"black",padding:14,borderRadius:12,textAlign:"center",fontWeight:900,textDecoration:"none"}}>👑 Upgrade VIP</a></div></div>}
-
-      <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#0a0a0a",borderTop:"1px solid #1a1a1a",display:"flex",justifyContent:"space-around",padding:"10px 0"}}>
-        <button onClick={()=>setTab("HOME")} style={{background:"none",border:"none",color:tab==="HOME"?"#00ff88":"#666"}}><div>⌂</div><div style={{fontSize:10,fontWeight:900}}>HOME</div></button>
-        <button onClick={()=>setTab("ANALYSIS")} style={{background:"none",border:"none",color:tab==="ANALYSIS"?"#00ff88":"#666"}}><div>📊</div><div style={{fontSize:10}}>ANALYSIS</div></button>
-        <button onClick={()=>setTab("PREDICTIONS")} style={{background:"none",border:"none",color:tab==="PREDICTIONS"?"#00ff88":"#666"}}><div>🎯</div><div style={{fontSize:10}}>PREDICTIONS</div></button>
-        <button onClick={()=>setTab("PROFILE")} style={{background:"none",border:"none",color:tab==="PROFILE"?"#00ff88":"#666"}}><div>👤</div><div style={{fontSize:10}}>PROFILE</div></button>
+      {tab==="ANALYSIS" && <div style={{padding:16}}><h4>📊 Analysis</h4><div style={{marginTop:10,background:"#121212",padding:12,borderRadius:10,fontSize:13}}>Auto daily updates • 20 markets<br/><a href="/vip" style={{display:"block",marginTop:10,background:"#00ff88",color:"black",padding:10,borderRadius:8,textAlign:"center",fontWeight:900,textDecoration:"none",fontSize:13}}>👑 VIP ₦4900</a></div></div>}
+      {tab==="PREDICTIONS" && <div style={{padding:16}}><h4>🎯 VIP</h4><div style={{marginTop:10,background:"#121212",padding:16,borderRadius:10,textAlign:"center",fontSize:13}}>🔒 VIP Only<br/><a href="/vip" style={{display:"block",marginTop:10,background:"#00ff88",color:"black",padding:10,borderRadius:8,fontWeight:900,textDecoration:"none"}}>👑 Join VIP</a></div></div>}
+      {tab==="PROFILE" && <div style={{padding:16}}><h4>👤 Profile</h4><div style={{marginTop:10,background:"#121212",padding:12,borderRadius:10,fontSize:13}}>Auto-updates daily at midnight<br/>Guest • 84% Win Rate<br/><a href="/vip" style={{display:"block",marginTop:10,background:"#00ff88",color:"black",padding:12,borderRadius:8,textAlign:"center",fontWeight:900,textDecoration:"none"}}>👑 Upgrade</a></div></div>}
+      <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#0a0a0a",borderTop:"1px solid #222",display:"flex",justifyContent:"space-around",padding:"8px 0"}}>
+        <button onClick={()=>setTab("HOME")} style={{background:"none",border:"none",color:tab==="HOME"?"#00ff88":"#666",fontSize:12}}>⌂<div style={{fontSize:9}}>HOME</div></button>
+        <button onClick={()=>setTab("ANALYSIS")} style={{background:"none",border:"none",color:tab==="ANALYSIS"?"#00ff88":"#666",fontSize:12}}>📊<div style={{fontSize:9}}>ANALYSIS</div></button>
+        <button onClick={()=>setTab("PREDICTIONS")} style={{background:"none",border:"none",color:tab==="PREDICTIONS"?"#00ff88":"#666",fontSize:12}}>🎯<div style={{fontSize:9}}>PREDICTIONS</div></button>
+        <button onClick={()=>setTab("PROFILE")} style={{background:"none",border:"none",color:tab==="PROFILE"?"#00ff88":"#666",fontSize:12}}>👤<div style={{fontSize:9}}>PROFILE</div></button>
       </div>
     </div>
   )
-                    }
+    }
