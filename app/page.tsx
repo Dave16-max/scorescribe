@@ -33,17 +33,17 @@ const fallbackMatches = [
 ]
 
 const leagueTeams:any = {
-  "Premier League": { home:["Man City","Arsenal","Liverpool","Chelsea","Tottenham","Man United","Newcastle","Aston Villa","Brighton","West Ham"], away:["Man United","Chelsea","Man City","Tottenham","Newcastle","Liverpool","Arsenal","West Ham","Brighton","Aston Villa"] },
-  "LaLiga": { home:["Real Madrid","Barcelona","Atletico","Sevilla","Villarreal","Betis","Athletic Club","Real Sociedad","Girona","Valencia"], away:["Barcelona","Atletico","Real Madrid","Villarreal","Betis","Sevilla","Sociedad","Bilbao","Valencia","Girona"] },
-  "Serie A": { home:["Inter","AC Milan","Napoli","Juventus","Roma","Atalanta","Lazio","Fiorentina","Bologna","Torino"], away:["AC Milan","Juventus","Inter","Roma","Napoli","Lazio","Atalanta","Torino","Fiorentina","Bologna"] },
-  "Bundesliga": { home:["Bayern","Dortmund","Leverkusen","Leipzig","Stuttgart","Frankfurt","Wolfsburg","Bremen","Hoffenheim","Augsburg"], away:["Dortmund","Bayern","Leipzig","Leverkusen","Frankfurt","Stuttgart","Augsburg","Wolfsburg","Bremen","Hoffenheim"] },
-  "Ligue 1": { home:["PSG","Marseille","Monaco","Lille","Lyon","Rennes","Nice","Lens","Brest","Strasbourg"], away:["Marseille","PSG","Lille","Monaco","Nice","Lyon","Lens","Rennes","Strasbourg","Brest"] },
-  "Champions League": { home:["Man City","Real Madrid","Arsenal","Bayern","Inter","PSG","Barcelona","Liverpool","Dortmund","Atletico"], away:["Real Madrid","Bayern","Inter","Man City","Barcelona","Dortmund","PSG","Atletico","Liverpool","Arsenal"] },
-  "Europa League": { home:["Roma","Leverkusen","Man United","Tottenham","Ajax","Lazio","Porto","Athletic Club","Galatasaray","Rangers"], away:["Leverkusen","Roma","Tottenham","Man United","Porto","Ajax","Athletic Club","Lazio","Rangers","Galatasaray"] },
-  "Conference League": { home:["Chelsea","Fiorentina","Betis","Heidenheim","Copenhagen","Vitoria","Legia","Gent","Panathinaikos","Molde"], away:["Fiorentina","Chelsea","Heidenheim","Betis","Gent","Copenhagen","Vitoria","Legia","Molde","Panathinaikos"] },
-  "NBA": { home:["Lakers","Warriors","Bulls","Celtics","Heat","Knicks","Nets","Mavericks","Bucks","Suns"], away:["Celtics","Lakers","Heat","Warriors","Bulls","Mavericks","Knicks","Bucks","Suns","Nets"] },
-  "EuroLeague": { home:["Real Madrid","Barcelona","Olympiacos","Fenerbahce","Panathinaikos","Monaco","Milan","Partizan","Zalgiris","Baskonia"], away:["Barcelona","Real Madrid","Fenerbahce","Olympiacos","Monaco","Panathinaikos","Partizan","Milan","Baskonia","Zalgiris"] },
-  "Liga ACB": { home:["Unicaja","Valencia","Real Madrid","Barcelona","Baskonia","Gran Canaria","Tenerife","Manresa","Zaragoza","Murcia"], away:["Valencia","Unicaja","Barcelona","Real Madrid","Tenerife","Baskonia","Manresa","Gran Canaria","Murcia","Zaragoza"] },
+  "Premier League": { home:["Man City","Arsenal","Liverpool","Chelsea","Tottenham","Man United"], away:["Man United","Chelsea","Man City","Tottenham","Newcastle","Liverpool"] },
+  "LaLiga": { home:["Real Madrid","Barcelona","Atletico","Sevilla","Villarreal","Betis"], away:["Barcelona","Atletico","Real Madrid","Villarreal","Betis","Sevilla"] },
+  "Serie A": { home:["Inter","AC Milan","Napoli","Juventus","Roma","Atalanta"], away:["AC Milan","Juventus","Inter","Roma","Napoli","Lazio"] },
+  "Bundesliga": { home:["Bayern","Dortmund","Leverkusen","Leipzig","Stuttgart","Frankfurt"], away:["Dortmund","Bayern","Leipzig","Leverkusen","Frankfurt","Stuttgart"] },
+  "Ligue 1": { home:["PSG","Marseille","Monaco","Lille","Lyon","Rennes"], away:["Marseille","PSG","Lille","Monaco","Nice","Lyon"] },
+  "Champions League": { home:["Man City","Real Madrid","Arsenal","Bayern","Inter","PSG"], away:["Real Madrid","Bayern","Inter","Man City","Barcelona","Dortmund"] },
+  "Europa League": { home:["Roma","Leverkusen","Man United","Tottenham","Ajax","Lazio"], away:["Leverkusen","Roma","Tottenham","Man United","Porto","Ajax"] },
+  "Conference League": { home:["Chelsea","Fiorentina","Betis","Heidenheim","Copenhagen","Vitoria"], away:["Fiorentina","Chelsea","Heidenheim","Betis","Gent","Copenhagen"] },
+  "NBA": { home:["Lakers","Warriors","Bulls","Celtics","Heat","Knicks"], away:["Celtics","Lakers","Heat","Warriors","Bulls","Mavericks"] },
+  "EuroLeague": { home:["Real Madrid","Barcelona","Olympiacos","Fenerbahce","Panathinaikos","Monaco"], away:["Barcelona","Real Madrid","Fenerbahce","Olympiacos","Monaco","Panathinaikos"] },
+  "Liga ACB": { home:["Unicaja","Valencia","Real Madrid","Barcelona","Baskonia","Gran Canaria"], away:["Valencia","Unicaja","Barcelona","Real Madrid","Tenerife","Baskonia"] },
 }
 
 export default function Page() {
@@ -85,6 +85,26 @@ export default function Page() {
 
   const freeCount = Math.ceil(filtered.length / 2)
 
+  if(activeTab==="profile"){
+    return (
+      <div style={{minHeight:"100vh",background:"#050505",color:"white",paddingBottom:90}}>
+        <div style={{padding:20}}>
+          <h2 style={{fontWeight:900}}>👤 PROFILE</h2>
+          <div style={{marginTop:20,background:"#121212",padding:15,borderRadius:12,border:"1px solid #222"}}>
+            <div style={{fontWeight:800}}>Guest User</div>
+            <div style={{color:"#888",fontSize:12,marginTop:4}}>Free Plan • 5 predictions/day</div>
+            <a href="/vip" style={{display:"block",marginTop:15,background:"#00ff88",color:"black",textAlign:"center",padding:"10px",borderRadius:10,fontWeight:900,textDecoration:"none"}}>👑 UPGRADE TO VIP ₦4900</a>
+          </div>
+        </div>
+        <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#0a0a0a",borderTop:"1px solid #222",display:"flex",justifyContent:"space-around",padding:"14px 0"}}>
+          <button onClick={()=>setActiveTab("home")} style={{background:"none",border:"none",color:"#666",fontSize:11,fontWeight:800,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}><span style={{fontSize:20}}>🏠</span>HOME</button>
+          <a href="/vip" style={{background:"#00ff88",color:"black",borderRadius:24,padding:"8px 22px",fontSize:11,fontWeight:900,textDecoration:"none",display:"flex",flexDirection:"column",alignItems:"center"}}><span style={{fontSize:18}}>👑</span>VIP</a>
+          <button onClick={()=>setActiveTab("profile")} style={{background:"none",border:"none",color:"#00ff88",fontSize:11,fontWeight:800,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}><span style={{fontSize:20}}>👤</span>PROFILE</button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{minHeight:"100vh",background:"#050505",color:"white",paddingBottom:90}}>
       <div style={{display:"flex",justifyContent:"space-between",padding:14}}>
@@ -121,21 +141,12 @@ export default function Page() {
         })}
       </div>
 
-      {/* BOTTOM BUTTONS - RESTORED */}
-      <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#0a0a0a",borderTop:"1px solid #222",display:"flex",justifyContent:"space-around",padding:"10px 0"}}>
-        <button onClick={()=>setActiveTab("home")} style={{background:"none",border:"none",color:activeTab==="home"?"#00ff88":"#666",fontSize:10,fontWeight:800,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-          <span style={{fontSize:18}}>🏠</span>HOME
-        </button>
-        <button onClick={()=>setActiveTab("predictions")} style={{background:"none",border:"none",color:activeTab==="predictions"?"#00ff88":"#666",fontSize:10,fontWeight:800,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-          <span style={{fontSize:18}}>⚽</span>PREDICTIONS
-        </button>
-        <a href="/vip" style={{background:"#00ff88",color:"black",borderRadius:20,padding:"6px 14px",fontSize:10,fontWeight:900,textDecoration:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
-          <span style={{fontSize:16}}>👑</span>VIP
-        </a>
-        <button onClick={()=>setActiveTab("profile")} style={{background:"none",border:"none",color:activeTab==="profile"?"#00ff88":"#666",fontSize:10,fontWeight:800,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-          <span style={{fontSize:18}}>👤</span>PROFILE
-        </button>
+      {/* ONLY 3 BUTTONS NOW */}
+      <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#0a0a0a",borderTop:"1px solid #222",display:"flex",justifyContent:"space-around",padding:"14px 0"}}>
+        <button onClick={()=>setActiveTab("home")} style={{background:"none",border:"none",color:activeTab==="home"?"#00ff88":"#666",fontSize:11,fontWeight:800,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}><span style={{fontSize:20}}>🏠</span>HOME</button>
+        <a href="/vip" style={{background:"#00ff88",color:"black",borderRadius:24,padding:"8px 22px",fontSize:11,fontWeight:900,textDecoration:"none",display:"flex",flexDirection:"column",alignItems:"center"}}><span style={{fontSize:18}}>👑</span>VIP</a>
+        <button onClick={()=>setActiveTab("profile")} style={{background:"none",border:"none",color:activeTab==="profile"?"#00ff88":"#666",fontSize:11,fontWeight:800,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}><span style={{fontSize:20}}>👤</span>PROFILE</button>
       </div>
     </div>
   )
-        }
+          }
