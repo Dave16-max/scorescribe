@@ -20,21 +20,36 @@ const basketTips = [
 ]
 
 const fallbackMatches = [
-  { home:"Tottenham", away:"Aston Villa", league:"Premier League", time:"11:30 GMT", sport:"Football" },
-  { home:"Man City", away:"Real Madrid", league:"Champions League", time:"20:00 GMT", sport:"Football" },
-  { home:"Arsenal", away:"Bayern", league:"Champions League", time:"20:00 GMT", sport:"Football" },
-  { home:"Roma", away:"Leverkusen", league:"Europa League", time:"20:00 GMT", sport:"Football" },
-  { home:"Fiorentina", away:"Chelsea", league:"Conference League", time:"20:00 GMT", sport:"Football" },
-  { home:"Barcelona", away:"Atletico", league:"LaLiga", time:"19:00 GMT", sport:"Football" },
+  { home:"Man City", away:"Arsenal", league:"Premier League", time:"15:00 GMT", sport:"Football" },
+  { home:"Liverpool", away:"Chelsea", league:"Premier League", time:"17:30 GMT", sport:"Football" },
+  { home:"Real Madrid", away:"Barcelona", league:"LaLiga", time:"19:00 GMT", sport:"Football" },
   { home:"Inter", away:"AC Milan", league:"Serie A", time:"19:45 GMT", sport:"Football" },
+  { home:"Bayern", away:"Dortmund", league:"Bundesliga", time:"17:30 GMT", sport:"Football" },
   { home:"PSG", away:"Marseille", league:"Ligue 1", time:"20:00 GMT", sport:"Football" },
+  { home:"Man City", away:"Real Madrid", league:"Champions League", time:"20:00 GMT", sport:"Football" },
+  { home:"Roma", away:"Leverkusen", league:"Europa League", time:"20:00 GMT", sport:"Football" },
   { home:"Lakers", away:"Warriors", league:"NBA", time:"19:00 GMT", sport:"Basketball" },
   { home:"Real Madrid", away:"Barcelona", league:"EuroLeague", time:"19:30 GMT", sport:"Basketball" },
 ]
 
+const leagueTeams:any = {
+  "Premier League": { home:["Man City","Arsenal","Liverpool","Chelsea","Tottenham","Man United","Newcastle","Aston Villa","Brighton","West Ham"], away:["Man United","Chelsea","Man City","Tottenham","Newcastle","Liverpool","Arsenal","West Ham","Brighton","Aston Villa"] },
+  "LaLiga": { home:["Real Madrid","Barcelona","Atletico","Sevilla","Villarreal","Betis","Athletic Club","Real Sociedad","Girona","Valencia"], away:["Barcelona","Atletico","Real Madrid","Villarreal","Betis","Sevilla","Sociedad","Bilbao","Valencia","Girona"] },
+  "Serie A": { home:["Inter","AC Milan","Napoli","Juventus","Roma","Atalanta","Lazio","Fiorentina","Bologna","Torino"], away:["AC Milan","Juventus","Inter","Roma","Napoli","Lazio","Atalanta","Torino","Fiorentina","Bologna"] },
+  "Bundesliga": { home:["Bayern","Dortmund","Leverkusen","Leipzig","Stuttgart","Frankfurt","Wolfsburg","Bremen","Hoffenheim","Augsburg"], away:["Dortmund","Bayern","Leipzig","Leverkusen","Frankfurt","Stuttgart","Augsburg","Wolfsburg","Bremen","Hoffenheim"] },
+  "Ligue 1": { home:["PSG","Marseille","Monaco","Lille","Lyon","Rennes","Nice","Lens","Brest","Strasbourg"], away:["Marseille","PSG","Lille","Monaco","Nice","Lyon","Lens","Rennes","Strasbourg","Brest"] },
+  "Champions League": { home:["Man City","Real Madrid","Arsenal","Bayern","Inter","PSG","Barcelona","Liverpool","Dortmund","Atletico"], away:["Real Madrid","Bayern","Inter","Man City","Barcelona","Dortmund","PSG","Atletico","Liverpool","Arsenal"] },
+  "Europa League": { home:["Roma","Leverkusen","Man United","Tottenham","Ajax","Lazio","Porto","Athletic Club","Galatasaray","Rangers"], away:["Leverkusen","Roma","Tottenham","Man United","Porto","Ajax","Athletic Club","Lazio","Rangers","Galatasaray"] },
+  "Conference League": { home:["Chelsea","Fiorentina","Betis","Heidenheim","Copenhagen","Vitoria","Legia","Gent","Panathinaikos","Molde"], away:["Fiorentina","Chelsea","Heidenheim","Betis","Gent","Copenhagen","Vitoria","Legia","Molde","Panathinaikos"] },
+  "NBA": { home:["Lakers","Warriors","Bulls","Celtics","Heat","Knicks","Nets","Mavericks","Bucks","Suns"], away:["Celtics","Lakers","Heat","Warriors","Bulls","Mavericks","Knicks","Bucks","Suns","Nets"] },
+  "EuroLeague": { home:["Real Madrid","Barcelona","Olympiacos","Fenerbahce","Panathinaikos","Monaco","Milan","Partizan","Zalgiris","Baskonia"], away:["Barcelona","Real Madrid","Fenerbahce","Olympiacos","Monaco","Panathinaikos","Partizan","Milan","Baskonia","Zalgiris"] },
+  "Liga ACB": { home:["Unicaja","Valencia","Real Madrid","Barcelona","Baskonia","Gran Canaria","Tenerife","Manresa","Zaragoza","Murcia"], away:["Valencia","Unicaja","Barcelona","Real Madrid","Tenerife","Baskonia","Manresa","Gran Canaria","Murcia","Zaragoza"] },
+}
+
 export default function Page() {
   const [filter, setFilter] = useState("All")
   const [matches, setMatches] = useState(fallbackMatches)
+  const [activeTab, setActiveTab] = useState("home")
 
   useEffect(()=>{
     async function load(){
@@ -52,27 +67,26 @@ export default function Page() {
   const filtered = (() => {
     if (filter==="All") return matches.slice(0,10)
     let lm = matches.filter(m=>m.league===filter)
-    // For Europe: if 10 matches that day -> 5 free 5 vip, if 12 -> 6 free 6 vip
-    if (lm.length < 2) {
-      const isEuro = ["Champions League","Europa League","Conference League"].includes(filter)
-      const count = isEuro? 12 : 10 // European nights get more
-      const isBasket = ["NBA","EuroLeague","Liga ACB"].includes(filter)
-      lm = Array.from({length:count}, (_,i)=>({
-        home: filter==="Champions League"? ["Man City","Arsenal","Real Madrid","Inter","Bayern","PSG","Barcelona","Dortmund","Liverpool","Atletico","Leverkusen","Milan"][i%12] : filter==="Europa League"? ["Roma","Leverkusen","Man United","Tottenham","Ajax","Lazio","Porto","Bilbao","Galatasaray","Fenerbahce","Rangers","Frankfurt"][i%12] : filter==="Conference League"? ["Chelsea","Fiorentina","Betis","Heidenheim","Copenhagen","Vitoria","Legia","Gent","Djurgarden","Rapid Wien","Panathinaikos","Molde"][i%12] : ["Man City","Arsenal","Liverpool"][i%3],
-        away: filter==="Champions League"? ["Real Madrid","Bayern","Inter","Barcelona","Arsenal","Dortmund","PSG","Liverpool","Milan","Leverkusen","Atletico","Man City"][i%12] : ["Sevilla","Braga","AZ","Lyon","Union","Qarabag"][i%6],
+    if (lm.length < 10) {
+      const count = ["Champions League","Europa League","Conference League"].includes(filter)? 12 : 10
+      const teams = leagueTeams[filter] || leagueTeams["Premier League"]
+      const sport = ["NBA","EuroLeague","Liga ACB"].includes(filter)? "Basketball" : "Football"
+      const generated = Array.from({length: count - lm.length}, (_,i)=>({
+        home: teams.home[i % teams.home.length],
+        away: teams.away[i % teams.away.length],
         league: filter,
-        time: `${18+i%5}:00 GMT`,
-        sport: isBasket?"Basketball":"Football"
+        time: `${15+i}:00 GMT`,
+        sport: sport
       }))
+      lm = [...lm,...generated].slice(0,count)
     }
     return lm
   })()
 
-  // HALF-HALF LOGIC: 5 free 5 paid, or 6 free 6 paid if 12 matches
   const freeCount = Math.ceil(filtered.length / 2)
 
   return (
-    <div style={{minHeight:"100vh",background:"#050505",color:"white",paddingBottom:80}}>
+    <div style={{minHeight:"100vh",background:"#050505",color:"white",paddingBottom:90}}>
       <div style={{display:"flex",justifyContent:"space-between",padding:14}}>
         <div style={{display:"flex",gap:9,alignItems:"center"}}><div style={{width:34,height:34,background:"white",color:"black",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900}}>S</div><div style={{fontWeight:900,fontSize:11}}>SCORESRIBE<br/>DAILY GUIDE</div></div>
         <a href="/vip" style={{background:"#00ff88",color:"black",padding:"7px 12px",borderRadius:18,fontWeight:800,textDecoration:"none",fontSize:11}}>👑 VIP ₦4900</a>
@@ -85,7 +99,7 @@ export default function Page() {
       </div>
 
       <div style={{margin:"0 12px 10px",background:"#111",borderRadius:10,padding:9,border:"1px solid #222",fontSize:10}}>
-        <span style={{color:"#00ff88",fontWeight:800}}>{filter==="All"? "5 FREE • 5 VIP" : `${freeCount} FREE • ${filtered.length-freeCount} VIP`} • {filtered.length} MATCHES TODAY • {filter}</span>
+        <span style={{color:"#00ff88",fontWeight:800}}>{freeCount} FREE • {filtered.length-freeCount} VIP • {filtered.length} MATCHES TODAY • {filter}</span>
       </div>
 
       <div style={{padding:"0 12px",display:"flex",flexDirection:"column",gap:10}}>
@@ -100,12 +114,28 @@ export default function Page() {
                 <div><div style={{color:"#00ff88",fontSize:8,fontWeight:800}}>{t.conf}% CONF</div><div style={{fontWeight:800,fontSize:12}}>{t.name}</div></div>
                 <div style={{background:"#1a1a1a",padding:"4px 8px",borderRadius:6,color:"#00ff88",fontWeight:900,fontSize:11}}>@{t.odd}</div>
               </div>
-              {!isFree && <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.8)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}><div>🔒</div><div style={{fontSize:10,fontWeight:800}}>VIP ONLY • {i+1}/{filtered.length}</div><a href="/vip" style={{marginTop:5,background:"#00ff88",color:"black",padding:"6px 14px",borderRadius:20,fontWeight:900,textDecoration:"none",fontSize:10}}>👑 UNLOCK ₦4900</a></div>}
+              {!isFree && <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.82)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}><div>🔒</div><div style={{fontSize:10,fontWeight:800}}>VIP ONLY • {i+1}/{filtered.length}</div><a href="/vip" style={{marginTop:5,background:"#00ff88",color:"black",padding:"6px 14px",borderRadius:20,fontWeight:900,textDecoration:"none",fontSize:10}}>👑 UNLOCK ₦4900</a></div>}
               {isFree && <div style={{position:"absolute",top:6,right:6,background:"#00ff88",color:"black",fontSize:7,fontWeight:900,padding:"2px 6px",borderRadius:10}}>FREE</div>}
             </div>
           )
         })}
       </div>
+
+      {/* BOTTOM BUTTONS - RESTORED */}
+      <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#0a0a0a",borderTop:"1px solid #222",display:"flex",justifyContent:"space-around",padding:"10px 0"}}>
+        <button onClick={()=>setActiveTab("home")} style={{background:"none",border:"none",color:activeTab==="home"?"#00ff88":"#666",fontSize:10,fontWeight:800,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+          <span style={{fontSize:18}}>🏠</span>HOME
+        </button>
+        <button onClick={()=>setActiveTab("predictions")} style={{background:"none",border:"none",color:activeTab==="predictions"?"#00ff88":"#666",fontSize:10,fontWeight:800,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+          <span style={{fontSize:18}}>⚽</span>PREDICTIONS
+        </button>
+        <a href="/vip" style={{background:"#00ff88",color:"black",borderRadius:20,padding:"6px 14px",fontSize:10,fontWeight:900,textDecoration:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
+          <span style={{fontSize:16}}>👑</span>VIP
+        </a>
+        <button onClick={()=>setActiveTab("profile")} style={{background:"none",border:"none",color:activeTab==="profile"?"#00ff88":"#666",fontSize:10,fontWeight:800,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+          <span style={{fontSize:18}}>👤</span>PROFILE
+        </button>
+      </div>
     </div>
   )
-                }
+        }
