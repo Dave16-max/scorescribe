@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 
-const leagues = ["All","Premier League","LaLiga","Serie A","Bundesliga","Ligue 1","Champions League","Europa League","Conference League","NBA","EuroLeague","Liga ACB"]
+const leagues = ["All","Premier League","LaLiga","Serie A","Bundesliga","Ligue 1","Champions League","Europa League","Conference League","NBA","EuroLeague","Liga ACB","WNBA","NCAA"]
 
 // ONLY your requested markets - NO straight win
 const accurateTips = [
@@ -16,14 +16,14 @@ const accurateTips = [
 ]
 
 const fallbackMatches = [
-  { home:"Man City", away:"Arsenal", league:"Premier League", time:"15:00 GMT", sport:"Football" },
-  { home:"Liverpool", away:"Chelsea", league:"Premier League", time:"17:30 GMT", sport:"Football" },
-  { home:"Real Madrid", away:"Barcelona", league:"LaLiga", time:"19:00 GMT", sport:"Football" },
-  { home:"Inter", away:"AC Milan", league:"Serie A", time:"19:45 GMT", sport:"Football" },
-  { home:"Bayern", away:"Dortmund", league:"Bundesliga", time:"17:30 GMT", sport:"Football" },
-  { home:"PSG", away:"Marseille", league:"Ligue 1", time:"20:00 GMT", sport:"Football" },
-  { home:"Man City", away:"Real Madrid", league:"Champions League", time:"20:00 GMT", sport:"Football" },
-  { home:"Roma", away:"Leverkusen", league:"Europa League", time:"20:00 GMT", sport:"Football" },
+  { home:"Arsenal", away:"Leeds", league:"Premier League", time:"12:30 WAT", sport:"Football" },
+  { home:"Man United", away:"Tottenham", league:"Premier League", time:"17:30 WAT", sport:"Football" },
+  { home:"Real Madrid", away:"Barcelona", league:"LaLiga", time:"19:00 WAT", sport:"Football" },
+  { home:"Inter", away:"AC Milan", league:"Serie A", time:"19:45 WAT", sport:"Football" },
+  { home:"Bayern", away:"Dortmund", league:"Bundesliga", time:"17:30 WAT", sport:"Football" },
+  { home:"PSG", away:"Marseille", league:"Ligue 1", time:"20:00 WAT", sport:"Football" },
+  { home:"Lakers", away:"Warriors", league:"NBA", time:"02:00 WAT", sport:"Basketball" },
+  { home:"Real Madrid", away:"Barca", league:"EuroLeague", time:"19:00 WAT", sport:"Basketball" },
 ]
 
 export default function Page() {
@@ -51,7 +51,6 @@ export default function Page() {
     if (filter==="All") return matches.slice(0,10)
     let lm = matches.filter(m=>m.league.includes(filter) || filter.includes(m.league))
     if (lm.length < 6) {
-      // if filter has no real games, show real games anyway
       return matches.slice(0,8)
     }
     return lm.slice(0,10)
@@ -122,4 +121,4 @@ export default function Page() {
       </div>
     </div>
   )
-        }
+          }
