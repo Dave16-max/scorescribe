@@ -41,10 +41,20 @@ function pick(s:any){
   if(s.o25>=0.6) return {name:"Over 2.5 Goals",odd:"1.90",conf:80}
   return {name:"X2 - Draw or Away",odd:"1.65",conf:82}
 }
+function checkWon(tipName:string, homeScore:number, awayScore:number): boolean | null{
+  if(homeScore==null||awayScore==null) return null
+  const total = homeScore+awayScore
+  if(tipName.includes("BTTS Yes")) return homeScore>0 && awayScore>0
+  if(tipName.includes("Over 1.5")) return total>1.5
+  if(tipName.includes("Over 2.5")) return total>2.5
+  if(tipName.includes("X2")) return awayScore>=homeScore
+  return null
+}
 
 export async function GET(){
   let all:any[] = []
-  // FOOTBALL
+  const now = new Date()
+
   const fbLeagues = [
     {espn:"eng.1", name:"Premier League"},
     {espn:"esp.1", name:"LaLiga"},
@@ -54,46 +64,84 @@ export async function GET(){
   ]
   for(const lg of fbLeagues){
     try{
-      const r = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${lg.espn}/scoreboard`, {next:{revalidate:3600}})
+      const r = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${lg.espn}/scoreboard`, {next:{revalidate:60}})
       const d = await r.json()
-      d.events?.slice(0,3).forEach((e:any)=>{
+      d.events?.forEach((e:any)=>{
+        const eventDate = new Date(e.date)
+        const isFinished = e.status?.type?.completed === true
+
+        const comps = e.competitions?.[0]?.competitors || []
+        const homeScore = parseInt(comps.find((c:any)=>c.homeAway==="home")?.score || comps[1]?.score)
+        const awayScore = parseInt(comps.find((c:any)=>c.homeAway==="away")?.score || comps[0]?.score)
+
+        // TEMP store raw for won check
         all.push({
           home:e.competitions[0].competitors[1]?.team?.displayName || "Home",
           away:e.competitions[0].competitors[0]?.team?.displayName || "Away",
           league: lg.name,
-          time: new Date(e.date).toLocaleTimeString("en-NG",{hour:"2-digit",minute:"2-digit"})+" WAT",
-          sport:"Football"
+          date: eventDate.toISOString().split('T')[0],
+          rawDate: e.date,
+          eventDate,
+          isFinished,
+          homeScore: isNaN(homeScore)? null : homeScore,
+          awayScore: isNaN(awayScore)? null : awayScore,
+          sport:"Football",
         })
       })
     }catch{}
   }
-  // BASKETBALL
-  try{
-    const r = await fetch(`https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard`, {next:{revalidate:3600}})
-    const d = await r.json()
-    d.events?.slice(0,5).forEach((e:any)=>{
-      all.push({
-        home:e.competitions[0].competitors[1]?.team?.displayName || "Home",
-        away:e.competitions[0].competitors[0]?.team?.displayName || "Away",
-        league:"NBA",
-        time: new Date(e.date).toLocaleTimeString("en-NG",{hour:"2-digit",minute:"2-digit"})+" WAT",
-        sport:"Basketball"
-      })
+
+  // PROCESS AND FILTER
+  let processed:any[] = []
+  for(const m of all){
+    // if not finished and time don pass 2hrs (postponed/cancelled) -> skip
+    if(!m.isFinished && m.eventDate.getTime() < now.getTime() - 2*60*60*1000) continue
+
+    let tip = {name:"Over 1.5 Goals",odd:"1.28",conf:75}
+    let realH2H = false
+    let h2hCount = 0
+
+    if(m.sport==="Football" && API_KEY && processed.length<5){
+      try{
+        const hid = await getTeamId(m.home)
+        const aid = await getTeamId(m.away)
+        if(hid&&aid){
+          const h2h = await getH2H(hid,aid)
+          const stats = analyze(h2h)
+          tip = pick(stats)
+          realH2H = h2h.length>0
+          h2hCount = h2h.length
+        }
+      }catch{}
+    }
+
+    const won = m.isFinished? checkWon(tip.name, m.homeScore, m.awayScore) : null
+
+    // LOGIC YOU WANT:
+    // 1. Upcoming -> show
+    // 2. Finished + WON -> show for 24hrs with tick
+    // 3. Finished + LOST or null -> comot immediately
+    if(m.isFinished){
+      if(won!==true) continue // comot LOST instantly
+      if(m.eventDate.getTime() < now.getTime() - 24*60*60*1000) continue // WON don old pass 24hrs, comot
+    }
+
+    processed.push({
+      home:m.home,
+      away:m.away,
+      league:m.league,
+      date:m.date,
+      rawDate:m.rawDate,
+      time: m.isFinished? `FT ${m.homeScore}-${m.awayScore} • WON` : new Date(m.rawDate).toLocaleTimeString("en-NG",{hour:"2-digit",minute:"2-digit"})+" WAT",
+      sport:m.sport,
+      tip,
+      realH2H,
+      h2hCount,
+      won: m.isFinished? true : null, // only true after final result
+      status: m.isFinished? "finished":"upcoming"
     })
-  }catch{}
+  }
 
-  // ADD REAL H2H FOR FOOTBALL ONLY (first 5 to save API)
-  const final = await Promise.all(all.map(async (m,i)=>{
-    if(m.sport!=="Football" || i>4 ||!API_KEY) return m
-    try{
-      const hid = await getTeamId(m.home)
-      const aid = await getTeamId(m.away)
-      if(!hid||!aid) return m
-      const h2h = await getH2H(hid,aid)
-      const stats = analyze(h2h)
-      return {...m, tip:pick(stats), realH2H:h2h.length>0, h2hCount:h2h.length}
-    }catch{ return m }
-  }))
-
-  return NextResponse.json(final)
+  processed.sort((a,b)=> new Date(a.rawDate).getTime() - new Date(b.rawDate).getTime())
+  return NextResponse.json(processed.slice(0,12))
 }
