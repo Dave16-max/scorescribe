@@ -16,8 +16,6 @@ const bbFallback = [
   { name:"Over 210.5 Points", odd:"1.85", conf:83 },
   { name:"Away +7.5 Handicap", odd:"1.85", conf:82 },
   { name:"Over 108.5 1st Half", odd:"1.75", conf:86 },
-  { name:"Home Over 110.5", odd:"1.95", conf:77 },
-  { name:"Under 225.5 Points", odd:"1.88", conf:79 },
 ]
 
 export default function Page() {
@@ -26,32 +24,39 @@ export default function Page() {
   const [loading, setLoading] = useState(true)
 
   useEffect(()=>{
-    fetch('/api/matches').then(r=>r.json()).then(d=>{
-      if(d.length>0) setMatches(d)
-      setLoading(false)
-    }).catch(()=>setLoading(false))
+    const load = () => {
+      fetch('/api/matches').then(r=>r.json()).then(d=>{
+        if(d.length>0) setMatches(d)
+        setLoading(false)
+      }).catch(()=>setLoading(false))
+    }
+    load()
+    const interval = setInterval(load, 180000)
+    return () => clearInterval(interval)
   },[])
 
-  // FIXED FILTER - THIS FIXES THE GLITCH
-  const finalMatches = (() => {
-    if(filter==="All") return matches.slice(0,12)
-    
-    const basketballLeagues = ["NBA","EuroLeague","Liga ACB","WNBA","NCAA"]
-    const isBasketballFilter = basketballLeagues.includes(filter)
+  const basketballLeagues = ["NBA","EuroLeague","Liga ACB","WNBA","NCAA"]
 
+  const finalMatches = (() => {
+    if (matches.length === 0) return []
+    if(filter==="All") return matches.slice(0,12)
+
+    const isBasketballFilter = basketballLeagues.includes(filter)
     if(isBasketballFilter){
-      // ONLY basketball, no football
-      return matches.filter(m=> m.sport==="Basketball" && m.league===filter).slice(0,10)
+      return matches.filter(m=> m.league===filter).slice(0,10)
     } else {
-      // ONLY football, no basketball
-      return matches.filter(m=> m.sport==="Football" && (m.league===filter || m.league.includes(filter))).slice(0,10)
+      return matches.filter(m=> {
+        const isBballMatch = basketballLeagues.includes(m.league) || m.sport==="Basketball"
+        if(isBballMatch) return false
+        return m.league===filter || m.league.includes(filter)
+      }).slice(0,10)
     }
   })()
 
-  const getTip = (m:any, idx:number) => {
+  const getTip = (m:any) => {
     if(m.tip) return m.tip
-    const isBball = m.sport==="Basketball"
-    const list = isBball ? bbFallback : fbFallback
+    const isBball = basketballLeagues.includes(m.league) || m.sport==="Basketball"
+    const list = isBball? bbFallback : fbFallback
     const seed = (m.home+m.away).split('').reduce((a:number,b:string)=>a+b.charCodeAt(0),0)
     return list[seed % list.length]
   }
@@ -71,28 +76,34 @@ export default function Page() {
 
       <div style={{margin:"0 12px 10px",background:"#111",borderRadius:10,padding:9,border:"1px solid #222",fontSize:10}}>
         <span style={{color:"#00ff88",fontWeight:800}}>
-          {loading ? "LOADING..." : `${finalMatches.length} MATCHES • ${filter} • ${finalMatches.filter(m=>m.realH2H).length} REAL H2H`}
+          {loading? "LOADING..." : `${finalMatches.length} MATCHES • ${filter} • ${finalMatches.filter(m=>m.realH2H).length} REAL H2H`}
         </span>
       </div>
 
       <div style={{padding:"0 12px",display:"flex",flexDirection:"column",gap:10}}>
-        {finalMatches.length===0 && !loading ? 
+        {finalMatches.length===0 &&!loading?
           <div style={{textAlign:"center",padding:30,color:"#666",fontSize:12}}>No {filter} games today.<br/>Check All tab.</div> :
           finalMatches.map((m:any,i)=>{
-            const t = getTip(m,i)
-            const isBball = m.sport==="Basketball"
+            const t = getTip(m)
+            const isBball = basketballLeagues.includes(m.league) || m.sport==="Basketball"
             return (
-              <div key={i} style={{background:"#121212",borderRadius:12,padding:10,border: m.realH2H ? "1px solid #00ff88":"1px solid #1e1e1e"}}>
-                <div style={{display:"flex",justifyContent:"space-between",fontSize:9}}>
-                  <span style={{background: isBball ? "#ff8800":"#222",padding:"3px 7px",borderRadius:20,color:isBball?"black":"white",fontWeight:700}}>
-                    {m.league} • {m.sport} {m.realH2H ? `• ${m.h2hCount} H2H` : ""}
+              <div key={i} style={{background:"#121212",borderRadius:12,padding:10,border: m.realH2H? "1px solid #00ff88":"1px solid #1e1e1e"}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:9,alignItems:"center"}}>
+                  <span style={{display:"flex",gap:4,alignItems:"center",flexWrap:"wrap"}}>
+                    <span style={{background: isBball? "#ff8800":"#222",padding:"3px 7px",borderRadius:20,color:isBball?"black":"white",fontWeight:700}}>
+                      {m.league} • {isBball? "Basketball" : "Football"} {m.realH2H? `• ${m.h2hCount} H2H` : ""}
+                    </span>
+                    {/* ONLY WON AFTER FINAL RESULT */}
+                    {m.won===true && m.status==="finished" && (
+                      <span style={{background:"#00ff88",color:"black",padding:"3px 7px",borderRadius:20,fontWeight:900,fontSize:9}}>✅ WON</span>
+                    )}
                   </span>
-                  <span style={{color:"#00ff88"}}>{m.time}</span>
+                  <span style={{color:"#00ff88",whiteSpace:"nowrap"}}>{m.time}</span>
                 </div>
                 <div style={{marginTop:6,fontWeight:800,fontSize:13}}>{m.home} vs {m.away}</div>
-                <div style={{marginTop:7,background:"#0a0a0a",borderRadius:8,padding:7,display:"flex",justifyContent:"space-between"}}>
+                <div style={{marginTop:7,background:"#0a0a0a",borderRadius:8,padding:7,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   <div>
-                    <div style={{color:"#00ff88",fontSize:8,fontWeight:800}}>{t.conf}% CONF • {m.realH2H ? "REAL H2H" : "FORM"}</div>
+                    <div style={{color:"#00ff88",fontSize:8,fontWeight:800}}>{t.conf}% CONF • {m.realH2H? "REAL H2H" : "FORM"}</div>
                     <div style={{fontWeight:800,fontSize:12}}>{t.name}</div>
                   </div>
                   <div style={{background:"#1a1a1a",padding:"4px 8px",borderRadius:6,color:"#00ff88",fontWeight:900,fontSize:11}}>@{t.odd}</div>
@@ -104,4 +115,4 @@ export default function Page() {
       </div>
     </div>
   )
-}
+      }
