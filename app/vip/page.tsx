@@ -1,60 +1,76 @@
-"use client"
-import { useEffect, useState } from "react"
-export default function VIPPage(){
-  const [isVIP,setIsVIP]=useState(false)
-  const [expiry,setExpiry]=useState("")
-  const [plan,setPlan]=useState("")
-  useEffect(()=>{ 
-    if(localStorage.getItem("vip_active")==="true"){ 
-      setIsVIP(true); 
-      setExpiry(localStorage.getItem("vip_expiry")||"")
-      setPlan(localStorage.getItem("vip_plan")||"")
-    } 
-  },[])
+"use client";
+import { useEffect, useState } from "react";
 
-  const pay=(t:string,a:number,d:number)=>{ 
-    localStorage.setItem("vip_active","true"); 
-    localStorage.setItem("vip_expiry",new Date(Date.now()+d*24*60*60*1000).toDateString()); 
-    localStorage.setItem("vip_plan",t); 
-    alert(`${t} payment ₦${a} successful!`); 
-    location.href="/"
+export default function VipPage() {
+  const [isVip, setIsVip] = useState(false);
+  const [expiry, setExpiry] = useState("");
+
+  useEffect(() => {
+    if (localStorage.getItem("vip_active") === "true") {
+      setIsVip(true);
+      setExpiry(localStorage.getItem("vip_expiry") || "");
+    }
+    // load paystack script
+    const script = document.createElement("script");
+    script.src = "https://js.paystack.co/v1/inline.js";
+    document.body.appendChild(script);
+  }, []);
+
+  const pay = (plan: string, amount: number, days: number) => {
+    // @ts-ignore
+    const handler = window.PaystackPop?.setup({
+      key: "pk_test_b5c6d6ad2c3409000320aa388146e26d72cebec0",
+      email: "user@scorescribe.com",
+      amount: amount * 100,
+      currency: "NGN",
+      ref: Date.now().toString(),
+      callback: function () {
+        const exp = new Date();
+        exp.setDate(exp.getDate() + days);
+        localStorage.setItem("vip_active", "true");
+        localStorage.setItem("vip_expiry", exp.toISOString());
+        localStorage.setItem("vip_plan", plan);
+        alert(`Payment successful! ${plan} Activated!`);
+        location.href = "/";
+      },
+      onClose: function () {
+        alert("Payment closed");
+      },
+    });
+    handler.openIframe();
+  };
+
+  if (isVip) {
+    return (
+      <div style={{ minHeight: "100vh", padding: "20px", textAlign: "center" }}>
+        <h1 style={{ color: "green", fontSize: "24px", fontWeight: "bold" }}>VIP ACTIVE</h1>
+        <p>Expires: {new Date(expiry).toDateString()}</p>
+        <button onClick={() => location.href="/"} style={{marginTop:"20px", background:"#0a5c36", color:"white", padding:"12px 24px", borderRadius:"8px"}}>Go Home</button>
+      </div>
+    );
   }
 
-  return(
-    <div style={{minHeight:"100vh",background:"#0a0a0a",color:"white",padding:20}}>
-      <button onClick={()=>history.back()} style={{background:"#222",border:"none",color:"white",padding:"8px 12px",borderRadius:20}}>← Back</button>
-      <h1 style={{marginTop:20,fontWeight:900}}>👑 VIP PLANS</h1>
+  return (
+    <div style={{ minHeight: "100vh", background: "#f5f5f5", padding: "20px" }}>
+      <button onClick={() => history.back()} style={{ marginBottom: "20px" }}>← Back</button>
+      <h1 style={{ fontSize: "24px", fontWeight: "bold", textAlign: "center" }}>Unlock VIP</h1>
+      
+      <div style={{ background: "white", padding: "20px", borderRadius: "12px", marginTop: "20px" }}>
+        <h2>WEEKLY - N4900</h2>
+        <p>7 days access to all predictions</p>
+        <button onClick={() => pay("WEEKLY", 4900, 7)} style={{ width: "100%", background: "#0a5c36", color: "white", padding: "14px", borderRadius: "8px", marginTop: "10px", fontWeight: "bold" }}>
+          Pay N4900 with Paystack
+        </button>
+        <p style={{fontSize:"11px", color:"gray", marginTop:"8px", textAlign:"center"}}>Test card: 4084 0840 8408 4081</p>
+      </div>
 
-      {!isVIP?(
-        <>
-          <div onClick={()=>pay("WEEKLY",4900,7)} style={{marginTop:20,background:"#151515",border:"2px solid #00ff88",borderRadius:12,padding:16,cursor:"pointer"}}>
-            <div style={{display:"flex",justifyContent:"space-between"}}>
-              <span style={{fontWeight:900}}>WEEKLY PLAN</span>
-              <span style={{background:"#00ff88",color:"black",padding:"4px 10px",borderRadius:20,fontWeight:900,fontSize:12}}>POPULAR</span>
-            </div>
-            <div style={{fontSize:28,fontWeight:900,marginTop:8}}>₦4,900<span style={{fontSize:14,color:"#888"}}>/week</span></div>
-            <div style={{fontSize:12,color:"#aaa",marginTop:6}}>✅ Exact scores • Daily tips • 7 days access</div>
-          </div>
-
-          <div onClick={()=>pay("MONTHLY",17900,30)} style={{marginTop:12,background:"#1a1a1a",border:"1px solid #333",borderRadius:12,padding:16,cursor:"pointer"}}>
-            <div style={{display:"flex",justifyContent:"space-between"}}>
-              <span style={{fontWeight:900}}>MONTHLY PLAN</span>
-              <span style={{background:"#333",color:"white",padding:"4px 10px",borderRadius:20,fontWeight:900,fontSize:12}}>BEST VALUE</span>
-            </div>
-            <div style={{fontSize:28,fontWeight:900,marginTop:8}}>₦17,900<span style={{fontSize:14,color:"#888"}}>/month</span></div>
-            <div style={{fontSize:12,color:"#aaa",marginTop:6}}>✅ Save ₦1700 • 30 days • All VIP tips + Telegram</div>
-          </div>
-
-          <div style={{marginTop:15,textAlign:"center",color:"#666",fontSize:11}}>Secure payment • Instant activation</div>
-        </>
-      ):(
-        <div style={{background:"#00ff88",color:"black",borderRadius:12,padding:20,marginTop:20}}>
-          <h2 style={{margin:0}}>✅ {plan} ACTIVE</h2>
-          <div style={{marginTop:8,fontWeight:700}}>Expires: {expiry}</div>
-          <div style={{marginTop:10,fontSize:12}}>You now have full access to all VIP predictions</div>
-          <button onClick={()=>{localStorage.clear(); location.reload()}} style={{marginTop:15,background:"black",color:"white",border:"none",padding:10,borderRadius:8,width:"100%"}}>Cancel Subscription</button>
-        </div>
-      )}
+      <div style={{ background: "white", padding: "20px", borderRadius: "12px", marginTop: "20px" }}>
+        <h2>MONTHLY - N8900</h2>
+        <p>30 days access</p>
+        <button onClick={() => pay("MONTHLY", 8900, 30)} style={{ width: "100%", background: "black", color: "white", padding: "14px", borderRadius: "8px", marginTop: "10px", fontWeight: "bold" }}>
+          Pay N8900 with Paystack
+        </button>
+      </div>
     </div>
-  )
-                                                                                                                                        }
+  );
+}
