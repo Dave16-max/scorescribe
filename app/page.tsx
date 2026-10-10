@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 
 const leagues = ["All","Premier League","LaLiga","Serie A","Bundesliga","Ligue 1","NBA"]
 
@@ -18,30 +18,45 @@ export default function Page() {
   const [filter, setFilter] = useState("All")
   const [matches, setMatches] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [filterLoading, setFilterLoading] = useState(false)
 
   useEffect(()=>{
     const load = () => {
       fetch('/api/matches').then(r=>r.json()).then(d=>{
         if(d.length>0) setMatches(d)
         setLoading(false)
-      })
+      }).catch(()=>setLoading(false))
     }
     load()
     const id = setInterval(load, 180000)
     return ()=>clearInterval(id)
   },[])
 
-  const finalMatches = (() => {
+  // FIX 1: Small animation when changing league - kills glitch
+  const handleFilter = (l: string) => {
+    if(l===filter) return
+    setFilterLoading(true)
+    setFilter(l)
+    setTimeout(()=> setFilterLoading(false), 250) // smooth transition
+  }
+
+  const finalMatches = useMemo(() => {
     if(matches.length===0) return []
+    if(filterLoading) return [] // clear old while switching
+
     if(filter==="All") return matches.slice(0,15)
 
-    // FIX: No mixing
     if(filter==="NBA"){
       return matches.filter(m=> m.sport==="Basketball" || m.league==="NBA").slice(0,15)
     } else {
-      return matches.filter(m=> m.sport==="Football" && m.league===filter).slice(0,15)
+      // FIX 2: normalize league name - LaLiga vs La Liga
+      return matches.filter(m=> {
+        const isFootball = m.sport==="Football" ||!m.sport
+        const leagueMatch = m.league?.toLowerCase().includes(filter.toLowerCase()) || m.league===filter
+        return isFootball && leagueMatch
+      }).slice(0,15)
     }
-  })()
+  }, [matches, filter, filterLoading])
 
   const getTip = (m:any) => m.tip || (m.sport==="Basketball"? bbFallback[0] : fbFallback[0])
 
@@ -54,28 +69,30 @@ export default function Page() {
 
       <div style={{display:"flex",gap:6,padding:"0 12px 10px",overflowX:"auto"}}>
         {leagues.map(l=>(
-          <button key={l} onClick={()=>setFilter(l)} style={{whiteSpace:"nowrap",padding:"7px 10px",borderRadius:10,border:"none",background:filter===l?"#00ff88":"#1a1a1a",color:filter===l?"black":"#aaa",fontWeight:700,fontSize:10}}>{l}</button>
+          <button key={l} onClick={()=>handleFilter(l)} style={{whiteSpace:"nowrap",padding:"7px 10px",borderRadius:10,border:"none",background:filter===l?"#00ff88":"#1a1a1a",color:filter===l?"black":"#aaa",fontWeight:700,fontSize:10}}>{l}</button>
         ))}
       </div>
 
       <div style={{margin:"0 12px 10px",background:"#111",borderRadius:10,padding:9,border:"1px solid #222",fontSize:10}}>
         <span style={{color:"#00ff88",fontWeight:800}}>
-          {loading? "LOADING..." : `${finalMatches.length} MATCHES • ${filter} • 🏀 ${matches.filter(m=>m.sport==="Basketball").length} BASKETBALL`}
+          {(loading || filterLoading)? "LOADING REAL MATCHES..." : `${finalMatches.length} MATCHES • ${filter} • 🏀 ${matches.filter(m=>m.sport==="Basketball" || m.league==="NBA").length} BASKETBALL`}
         </span>
       </div>
 
       <div style={{padding:"0 12px",display:"flex",flexDirection:"column",gap:10}}>
-        {finalMatches.length===0 &&!loading?
-          <div style={{textAlign:"center",padding:30,color:"#666",fontSize:12}}>No {filter} games today<br/>NBA go show when season start</div> :
+        {(loading || filterLoading)? (
+          <div style={{textAlign:"center",padding:30,color:"#00ff88",fontSize:11}}>LOADING REAL MATCHES...</div>
+        ) : finalMatches.length===0?
+          <div style={{textAlign:"center",padding:30,color:"#666",fontSize:12}}>No {filter} games today<br/>{filter!=="NBA"? "Check All or try NBA" : "NBA go show when season start"}</div> :
           finalMatches.map((m:any,i)=>{
             const t = getTip(m)
-            const isBball = m.sport==="Basketball"
+            const isBball = m.sport==="Basketball" || m.league==="NBA"
             return (
-              <div key={i} style={{background:"#121212",borderRadius:12,padding:10,border: m.realH2H? "1px solid #00ff88":"1px solid #1e1e1e"}}>
+              <div key={`${filter}-${i}`} style={{background:"#121212",borderRadius:12,padding:10,border: m.realH2H? "1px solid #00ff88":"1px solid #1e1e1e"}}>
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:9,alignItems:"center"}}>
                   <span style={{display:"flex",gap:4,alignItems:"center"}}>
                     <span style={{background: isBball? "#ff8800":"#222",padding:"3px 7px",borderRadius:20,color:isBball?"black":"white",fontWeight:700}}>
-                      {m.league} • {m.sport} {m.realH2H? `• ${m.h2hCount} H2H` : ""}
+                      {m.league} • {isBball? "Basketball" : m.sport || "Football"} {m.realH2H? `• ${m.h2hCount} H2H` : ""}
                     </span>
                     {m.won===true && m.status==="finished" && (
                       <span style={{background:"#00ff88",color:"black",padding:"3px 7px",borderRadius:20,fontWeight:900,fontSize:9}}>✅ WON</span>
